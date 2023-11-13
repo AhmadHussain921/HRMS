@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { InjectModel } from '@nestjs/mongoose';
+import { Roles } from 'src/utils/utils';
 import { Model } from 'mongoose';
 @Injectable()
 export class EmployeeService {
@@ -13,6 +14,9 @@ export class EmployeeService {
             console.log(e);
             return '';
           }
+        }
+        removeDuplicatesFromModuleAccessArray(arr?: []) {
+          return [...new Set(arr)];
         }
         async findUserByReq(req: any) {
           try {
@@ -30,7 +34,12 @@ export class EmployeeService {
             return null;
           }
     }
-    async roleRulesToRegisterUser(req: any, role: number, moduleAccess: []) {
+    async roleRulesToRegisterUser(
+      req: any,
+      role: number,
+      moduleAccess: [],
+      moduleNumber: number,
+    ) {
         //if user who requested to register new user belongs to lower class then throwing error
         try {
             const fetchedUser = await this.findUserByReq(req);
@@ -40,7 +49,10 @@ export class EmployeeService {
                 error: 'Invalid Error',
               };
             }
-            if (fetchedUser.role <= role) {
+            if (
+              fetchedUser.role <= role &&
+              fetchedUser.role !== Roles.indexOf('subAdmin')
+            ) {
               return {
                 status: false,
                 error: 'User has no permission to add this user',
@@ -48,14 +60,27 @@ export class EmployeeService {
             }
             //if admin has not provided any module access to sub admin
             else if (
-              fetchedUser.role === 2 &&
-              role === 1 &&
+              fetchedUser.role === Roles.indexOf('admin') &&
+              role === Roles.indexOf('subAdmin') &&
               moduleAccess?.length <= 0
             ) {
               return {
                 status: false,
                 error: 'Admin has not provided any module permission to sub admin',
               };
+            } else if (
+              role === Roles.indexOf('employee') &&
+              fetchedUser.role === Roles.indexOf('subAdmin')
+            ) {
+              const checkPermissions = fetchedUser.moduleAccess;
+              if (checkPermissions.includes(moduleNumber)) {
+                return { status: true };
+              } else {
+                return {
+                  status: false,
+                  error: 'sub admin has no permission to add employee',
+                };
+              }
             } else {
               return { status: true };
             }
@@ -67,8 +92,7 @@ export class EmployeeService {
           };
         }
     }
-    async roleRulesToUpdateUser(req: any, id: any) {
-      //if user who requested to register new user belongs to lower class then throwing error
+    async roleRulesToUpdateUser(req: any, id: any, moduleNumber: number) {      //if user who requested to register new user belongs to lower class then throwing error
       try {
         const fetchedUser = await this.findUserByReq(req);
         if (!fetchedUser) {
@@ -85,17 +109,66 @@ export class EmployeeService {
           };
         }
         const role = myUser.role;
-        if (fetchedUser.role <= role) {
+        if (
+          fetchedUser.role <= role &&
+          fetchedUser.role !== Roles.indexOf('subAdmin')
+        ) {
           return {
             status: false,
             error: 'User has no permission to manipulate this user',
           };
+        } else if (
+          role === Roles.indexOf('employee') &&
+          fetchedUser.role === Roles.indexOf('subAdmin')
+        ) {
+          const checkPermissions = fetchedUser.moduleAccess;
+          if (checkPermissions.includes(moduleNumber)) {
+            return { status: true };
+          } else {
+            return {
+              status: false,
+              error: 'sub admin has no permission to manipulate employee',
+            };
+          }
         } else {
           return { status: true };
         }
       } catch (e) {
         console.log(e);
         return { status: false, error: 'Invalid Error' };
+        }
+      }
+      async roleRuleToChangeRoleOrModuleAccess(req: any, id: any) {
+        try {
+          const fetchedUser = await this.findUserByReq(req);
+          if (!fetchedUser) {
+            return {
+              status: false,
+              error: 'Invalid Error',
+            };
+          }
+          const myUser = await this.Employee.findById(id);
+          if (!myUser) {
+            return {
+              status: false,
+              error: 'User not found',
+            };
+          }
+          const role = myUser.role;
+          // console.log("This is my role")
+          if (fetchedUser.role <= role || role !== Roles.indexOf('subAdmin')) {
+            return {
+              status: false,
+              error: 'User has no permission to manipulate this user',
+            };
+          } else {
+            return {
+              status: true,
+            };
+          }
+        } catch (e) {
+          console.log(e);
+          throw new Error('invalid Error');
         }
       }
   }
