@@ -16,11 +16,14 @@ import {
   import { JwtAuthGuard } from 'src/auth/jwt-auth.gaurd';
   import { CreateDeptDto } from './department.dtos';
   import { Model } from 'mongoose';
+  import { modules } from 'src/utils/utils';
+  import { EmployeeService } from 'src/employee/employee.service';
   @Controller('department')
   export class DepartmentController {
     constructor(
       @InjectModel('Department') private Department: Model<any>,
       private readonly departmentService: DepartmentService,
+      private readonly employeeService: EmployeeService,
     ) {}
     @Get()
     async allDepartments(@Req() req: Request, @Res() res: Response) {
@@ -34,7 +37,7 @@ import {
       }
     }
     @Post('register')
-    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async register(
       @Req() req: any,
       @Res() res: Response,
@@ -45,6 +48,16 @@ import {
         res.status(404);
         throw new Error('Insufficient details');
       }
+      const obayedRules: any =
+      await this.departmentService.roleRulesToRegisterDepartment(
+        req,
+        modules.indexOf('department'),
+      );
+
+    if (!obayedRules.status) {
+      res.status(401);
+      throw new Error(obayedRules.error);
+    }
       try {
         const newDep = await this.Department.create({
           name,
