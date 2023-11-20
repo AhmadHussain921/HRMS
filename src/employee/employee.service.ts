@@ -197,4 +197,13 @@ export class EmployeeService {
       throw new Error('invalid Error');
     }
   }
+  async giveMyEmployee(id: any) {
+    try {
+      const thisIsMine = await this.Employee.findById(id);
+      return thisIsMine;
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  }
 }
