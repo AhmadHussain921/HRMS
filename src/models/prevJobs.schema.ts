@@ -2,23 +2,23 @@ import * as mongoose from 'mongoose';
 const Schema = new mongoose.Schema({
   moduleNumber: {
     type: Number,
-    default: 2,
+    default: 1,
     immutable: true,
   },
-  subject: {
+  jobTitle: {
     type: String,
-    required: true,
-    default: '',
   },
-  description: {
+  companyName: {
     type: String,
-    required: true,
   },
-  status: {
+  companyContact: {
+    type: String,
+  },
+  salary: {
     type: Number,
+    double: true,
     default: 0,
-    enum: [0, 1, 2],
   },
 });
-const CorrectionReq = Schema;
-export default CorrectionReq;
+const PrevJobs = Schema;
+export default PrevJobs;
