@@ -13,7 +13,7 @@ export class CreateDeptDto {
 
   @IsEmail()
   readonly email: string;
-
+}
   export class UpdateDeptDto {
     @IsOptional()
     @IsString()
@@ -45,4 +45,3 @@ export class CreateDeptDto {
   export class IdQueryRequestDto {
     id: IdQuery;
   }
-}
