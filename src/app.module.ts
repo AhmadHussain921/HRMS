@@ -7,6 +7,7 @@ import { DepartmentModule } from './department/department.module';
 import { ExperienceModule } from './experience/experience.module';
 import { EmployeeModule } from './employee/employee.module';
 import { AuthModule } from './auth/auth.module';
+import { CorrectionReqModule } from './correctionReq/correctionReq.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -24,6 +25,7 @@ import { AuthModule } from './auth/auth.module';
     AuthModule,
     DepartmentModule,
     ExperienceModule,
+    CorrectionReqModule,
   ],
   controllers: [AppController],
   providers: [AppService],
