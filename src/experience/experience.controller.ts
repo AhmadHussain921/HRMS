@@ -15,6 +15,16 @@ import {
   import { JwtAuthGuard } from '../auth/jwt-auth.gaurd';
 import { modules } from 'src/utils/utils';
   import { EmployeeService } from '../employee/employee.service';
+  import {
+    AddExpReqDto,
+    SkillReqDto,
+    PrevJobReqDto,
+    TrainingReqDto,
+    SIdQueryRequestDto,
+    EIdQueryRequestDto,
+    PJIdQueryRequestDto,
+    TIdQueryRequestDto,
+  } from './experience.dtos';
   @Controller('employee/experience')
   export class ExperienceController {
     constructor(
@@ -40,8 +50,8 @@ import { modules } from 'src/utils/utils';
     async addExperience(
       @Req() req: any,
       @Res() res: Response,
-      @Body() body: any,
-      @Query() query: any,
+      @Body() body: AddExpReqDto,
+      @Query() query: EIdQueryRequestDto,
     ) {
       const { id } = query;
       const { skills, prevJobs, trainings } = body;
@@ -110,8 +120,8 @@ import { modules } from 'src/utils/utils';
   async editSkills(
     @Req() req: any,
     @Res() res: Response,
-    @Body() body: any,
-    @Query() query: any,
+    @Body() body: SkillReqDto,
+    @Query() query: SIdQueryRequestDto,
   ) {
     const { sid } = query;
     const { skill } = body;
@@ -188,8 +198,8 @@ import { modules } from 'src/utils/utils';
   async editTrainings(
     @Req() req: any,
     @Res() res: Response,
-    @Body() body: any,
-    @Query() query: any,
+    @Query() query: PJIdQueryRequestDto,
+    @Body() body: PrevJobReqDto,
   ) {
     const { tid } = query;
     const { training } = body;

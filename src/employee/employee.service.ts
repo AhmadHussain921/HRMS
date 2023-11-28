@@ -250,8 +250,8 @@ export class EmployeeService {
       return null;
     }
   }
-  async remCorrectionreqFromEmployee(eid: string, crid: string) {
-    try {
+  async remCorrectionreqFromEmployee(eid: any, crid: any) {
+        try {
       const remCorrectionReq = await this.Employee.findByIdAndUpdate(
         eid,
         { $pull: { CRID: crid } },
