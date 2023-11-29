@@ -34,8 +34,21 @@ import {
         res.status(200).json(depts);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error('Invalid Error');
+        res.status(500).json('Invalid Error');
+      }
+    }
+    @Get('/me')
+    @UseGuards(JwtAuthGuard)
+    async myDepartments(@Req() req: Request, @Res() res: Response) {
+      try {
+        const myExmployee = await this.employeeService.findUserByReq(req);
+        const mine = await this.departmentService.giveMyDeptByEmpId(
+          myExmployee._id,
+        );
+        res.status(200).json(mine);
+      } catch (e) {
+        console.log(e);
+        res.status(500).json('Invalid Error');
       }
     }
     @Post('register')
@@ -78,7 +91,7 @@ import {
         return res.status(201).json(newDep);
       } catch (e) {
         console.log(e);
-        throw new Error('Invalid Error');
+        res.status(500).json('Invalid Error');
       }
     }
     @Put('update')
@@ -116,8 +129,7 @@ import {
         res.status(201).json(updateDept);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error('Invalid Error');
+        res.status(500).json('Invalid Error');
       }
     }
     @Delete('delete')
@@ -148,8 +160,7 @@ import {
       res.status(201).json(delDept);
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   }

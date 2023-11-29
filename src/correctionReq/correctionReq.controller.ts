@@ -37,11 +37,28 @@ import {
         res.status(200).json(all);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error('Invalid Error');
+        res.status(500).json('Invalid Error');
       }
     }
-    @Put()
+    @Put('/me')
+    @UseGuards(JwtAuthGuard)
+    async myCorrectionReq(@Req() req: any, @Res() res: Response) {
+      try {
+        const myExmployee = await this.employeeService.findUserByReq(req);
+        const myArr = [];
+        if (myExmployee.CRID.length > 0) {
+          for (const crid of myExmployee.CRID) {
+            const mine =
+              await this.correctionReqService.findMyCorrectionReq(crid);
+            myArr.push(mine);
+          }
+        }
+        res.status(200).json(myArr);
+      } catch (e) {
+        console.log(e);
+        res.status(500).json('Invalid Error');
+      }
+    }
     @Put('/add')
     @UseGuards(JwtAuthGuard)
     async addCorrection(
@@ -77,8 +94,7 @@ import {
           res.status(201).json({ myEmp, myCorrectionReq });
         } catch (e) {
           console.log(e);
-          res.status(500);
-          throw new Error('Invalid Error');
+          res.status(500).json('Invalid Error');
         }
       }
       @Put('/update')
@@ -115,8 +131,7 @@ import {
         res.status(201).json(myCorrectionReq);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error('Invalid Error');
+        res.status(500).json('Invalid Error');
       }
     }
     @Delete('/delete')
@@ -155,8 +170,7 @@ import {
       res.status(201).json({ remEmpFromDept, myCorrectionReq });
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   }

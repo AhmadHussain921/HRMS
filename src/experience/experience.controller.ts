@@ -15,6 +15,7 @@ import {
   import { JwtAuthGuard } from '../auth/jwt-auth.gaurd';
 import { modules } from 'src/utils/utils';
   import { EmployeeService } from '../employee/employee.service';
+  import { ExperienceService } from './experience.service';
   import {
     AddExpReqDto,
     SkillReqDto,
@@ -33,6 +34,8 @@ import { modules } from 'src/utils/utils';
       @InjectModel('PrevJobs') private PrevJobs: Model<any>,
       @InjectModel('Trainings') private Trainings: Model<any>,
       private readonly employeeService: EmployeeService,
+      private readonly experienceService: ExperienceService,
+      
     ) {}
     @Get()
     async allExperiences(@Req() req: Request, @Res() res: Response) {
@@ -41,8 +44,21 @@ import { modules } from 'src/utils/utils';
         res.status(200).json(myExperiences);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error(e);
+        res.status(500).json('Invalid Error');
+      }
+    }
+    @Put('/me')
+    @UseGuards(JwtAuthGuard)
+    async myExperience(@Req() req: any, @Res() res: Response) {
+      try {
+        const myExmployee = await this.employeeService.findUserByReq(req);
+        const mine = await this.experienceService.giveMyExperience(
+          myExmployee.EXID,
+        );
+        res.status(200).json(mine);
+      } catch (e) {
+        console.log(e);
+        res.status(500).json('Invalid Error');
       }
     }
     @Put('add')
@@ -111,8 +127,7 @@ import { modules } from 'src/utils/utils';
         res.status(201).json(wholeData);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error('Invalid Error');
+        res.status(500).json('Invalid Error');
       }
     }
     @Put('edit/skill')
@@ -148,8 +163,7 @@ import { modules } from 'src/utils/utils';
       res.status(201).json(editedSkills);
     } catch (e) {
       console.log(e);
-      res.status(400);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   @Put('edit/prevjob')
@@ -189,8 +203,7 @@ import { modules } from 'src/utils/utils';
       res.status(201).json(editedPrevJobs);
     } catch (e) {
       console.log(e);
-      res.status(400);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   @Put('edit/traning')
@@ -230,8 +243,7 @@ import { modules } from 'src/utils/utils';
       res.status(201).json(editedTraining);
     } catch (e) {
       console.log(e);
-      res.status(400);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   }

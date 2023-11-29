@@ -37,13 +37,26 @@ import {
         res.status(200).json(fetchingDesignations);
       } catch (e) {
         console.log(e);
-        res.status(500);
-        throw new Error(e);
+        res.status(500).json('Invalid Error');
+      }
+    }
+    @Put('/me')
+    @UseGuards(JwtAuthGuard)
+    async myDesignation(@Req() req: any, @Res() res: Response) {
+      try {
+        const myExmployee = await this.employeeService.findUserByReq(req);
+        const mine = await this.designationService.giveMyDesignation(
+          myExmployee.DESGID,
+        );
+        res.status(200).json(mine);
+      } catch (e) {
+        console.log(e);
+        res.status(500).json('Invalid Error');
       }
     }
     @Put('add')
     @UseGuards(JwtAuthGuard)
-  async addDesignation(
+    async addDesignation(
     @Req() req: any,
     @Res() res: Response,
     @Body() body: DesgReqDto,
@@ -78,8 +91,7 @@ import {
       res.status(201).json({ newDesignation, findingMyEmp });
     } catch (e) {
       console.log(e);
-      res.status(200);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   @Put('update')
@@ -117,8 +129,7 @@ import {
       res.status(201).json({ updateDesignation });
     } catch (e) {
       console.log(e);
-      res.status(200);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   @Delete('/delete')
@@ -155,8 +166,7 @@ import {
       res.status(201).json({ delDesignation });
     } catch (e) {
       console.log(e);
-      res.status(200);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   }

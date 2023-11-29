@@ -25,6 +25,9 @@ import {
 import { EmployeeService } from './employee.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.gaurd';
 import { Model } from 'mongoose';
+import { ExperienceService } from 'src/experience/experience.service';
+import { CorrectionReqService } from 'src/correctionReq/correctionReq.service';
+import { DesignationService } from 'src/designation/designation.service';
 import { Roles, modules } from '../utils/utils';
 @Controller('employee')
 export class EmployeeController {
@@ -32,6 +35,9 @@ export class EmployeeController {
     @InjectModel('Employee') private Employee: Model<any>,
     private readonly employeeService: EmployeeService,
     private readonly departmentService: DepartmentService,
+    private readonly experienceService: ExperienceService,
+    private readonly correctionReqService: CorrectionReqService,
+    private readonly designationService: DesignationService,
   ) {}
 
   @Get()
@@ -50,6 +56,7 @@ export class EmployeeController {
     @Req() req: any,
     @Res() res: Response,
     @Body() body: CreateUserDto,
+    @Query() query: IdQueryRequestDto,
   ) {
     const {
       name,
@@ -61,8 +68,8 @@ export class EmployeeController {
       email,
       password,
       role = 0,
-      did,
     } = body;
+    const { did } = query;
     let { moduleAccess }: any = body;
     if (moduleAccess?.length > 1) {
       moduleAccess =
@@ -122,8 +129,7 @@ export class EmployeeController {
       res.status(201).json({ newEmployee });
     } catch (e) {
       console.log(e);
-      res.status(401);
-      throw new Error('Invalid Error');
+      res.status(500).json('Invalid Error');
     }
   }
   @Post('login')
@@ -147,8 +153,7 @@ export class EmployeeController {
       return res.status(200).json({ user, myToken });
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error(e);
+      res.status(500).json('Invalid Error');
     }
   }
   @Put('update')
@@ -181,8 +186,7 @@ export class EmployeeController {
       res.status(201).json(updatedUser);
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error(e);
+      res.status(500).json('Invalid Error');
     }
   }
   @Delete('delete')
@@ -217,11 +221,43 @@ export class EmployeeController {
         did,
         id,
       );
+      const exId = deletedUser.EXID;
+      const crIds = deletedUser.CRID;
+      const desgId = deletedUser.DESGID;
+      if (exId) {
+        const myExperience =
+          await this.experienceService.giveMyExperience(exId);
+        if (myExperience) {
+          if (myExperience?.PJID.length > 0) {
+            for (const pjid of myExperience.PJID) {
+              await this.experienceService.delMyPrevJob(pjid);
+            }
+          }
+          if (myExperience?.TRID.length > 0) {
+            for (const tid of myExperience.TRID) {
+              await this.experienceService.delMyTraining(tid);
+            }
+          }
+          if (myExperience?.SKID.length > 0) {
+            for (const skid of myExperience.SKID) {
+              await this.experienceService.delMySkill(skid);
+            }
+          }
+          await this.experienceService.delMyExperience(exId);
+        }
+      }
+      if (crIds.length > 0) {
+        for (const crId of crIds) {
+          await this.correctionReqService.delMyCorrectionReq(crId);
+        }
+      }
+      if (desgId) {
+        await this.designationService.delMyDesignation(desgId);
+      }
       res.status(201).json({ deletedUser, remEmpFromDept });
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error(e);
+      res.status(500).json('Invalid Error');
     }
   }
   @Put('/module/access/change')
@@ -267,8 +303,7 @@ export class EmployeeController {
       res.status(201).json(newAccess);
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error(e);
+      res.status(500).json('Invalid Error');
     }
   }
   @Put('/role/access/change')
@@ -322,8 +357,7 @@ export class EmployeeController {
       res.status(201).json(newAccess);
     } catch (e) {
       console.log(e);
-      res.status(500);
-      throw new Error(e);
+      res.status(500).json('Invalid Error');
     }
   }
 }
