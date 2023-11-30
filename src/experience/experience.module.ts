@@ -3,7 +3,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EmployeeModule } from 'src/employee/employee.module';
 import { ExperienceController } from './experience.controller';
-import { ExperienceService } from './exprience.service';
+import { ExperienceService } from './experience.service';
 import Experience from 'src/models/experience.schema';
 import PrevJobs from 'src/models/prevJobs.schema';
 import Skills from 'src/models/skills.schema';

@@ -2,7 +2,7 @@ import {
     Controller,
     Get,
     Put,
-    //   Delete,
+    Delete,
     Req,
     Res,
     Body,
@@ -130,6 +130,64 @@ import { modules } from 'src/utils/utils';
         res.status(500).json('Invalid Error');
       }
     }
+    @Put('update')
+    @UseGuards(JwtAuthGuard)
+    async updateExperience(
+      @Req() req: any,
+      @Res() res: Response,
+      @Body() body: AddExpReqDto,
+      @Query() query: any,
+    ) {
+      const { eid, exid } = query;
+      const { skills, prevJobs, trainings } = body;
+      try {
+        if (!eid || !exid) {
+          res.status(404);
+          throw new Error('Insufficient data');
+        }
+        const mineEmp = await this.employeeService.giveMyEmployee(eid);
+        if (!mineEmp) {
+          res.status(404);
+          throw new Error('My employee not found');
+        }
+        const obayedRules = await this.employeeService.roleRulesTypical(
+          req,
+          modules.indexOf('employee'),
+        );
+        if (!obayedRules.status) {
+          res.status(401);
+          throw new Error(obayedRules.error);
+        }
+        const myExperience = await this.Experience.findById(exid);
+        for (const skill of skills) {
+          const addSkill = await this.Skills.create(skill);
+          await addSkill.save();
+          myExperience.SKID.push(addSkill);
+        }
+        for (const training of trainings) {
+          const addTraining = await this.Trainings.create(training);
+          await addTraining.save();
+          myExperience.TRID.push(addTraining);
+        }
+        for (const prevJob of prevJobs) {
+          const addPrevJob = await this.PrevJobs.create(prevJob);
+          await addPrevJob.save();
+          myExperience.PJID.push(addPrevJob);
+        }
+        await myExperience.save();
+  
+        const wholeData = await mineEmp.populate({
+          path: 'EXID',
+          populate: {
+            path: 'PJID TRID SKID',
+          },
+        });
+        res.status(201).json(wholeData);
+      } catch (e) {
+        console.log(e);
+        res.status(500).json('Invalid Error');
+      }
+    }
     @Put('edit/skill')
     @UseGuards(JwtAuthGuard)
   async editSkills(
@@ -206,13 +264,16 @@ import { modules } from 'src/utils/utils';
       res.status(500).json('Invalid Error');
     }
   }
-  @Put('edit/traning')
+  @Put('edit/training')
   @UseGuards(JwtAuthGuard)
   async editTrainings(
     @Req() req: any,
     @Res() res: Response,
-    @Query() query: PJIdQueryRequestDto,
-    @Body() body: PrevJobReqDto,
+    // @Query() query: PJIdQueryRequestDto,
+    // @Body() body: PrevJobReqDto,
+    @Query() query: any,
+    @Body() body: any,
+    
   ) {
     const { tid } = query;
     const { training } = body;
@@ -241,6 +302,143 @@ import { modules } from 'src/utils/utils';
         throw new Error('Invalid Error');
       }
       res.status(201).json(editedTraining);
+    } catch (e) {
+      console.log(e);
+      res.status(500).json('Invalid Error');
+    }
+  }
+  @Put('remove/skill')
+  @UseGuards(JwtAuthGuard)
+  async removeSkill(
+    @Req() req: any,
+    @Res() res: Response,
+    @Query() query: any,
+  ) {
+    const { exid, skid } = query;
+    try {
+      if (!exid || !skid) {
+        res.status(404);
+        throw new Error('Insufficient data');
+      }
+      const remSkill = await this.Skills.findOneAndDelete(skid);
+      if (remSkill) {
+        await this.Experience.findByIdAndUpdate(
+          exid,
+          {
+            $pull: { SKID: skid },
+          },
+          {
+            new: true,
+          },
+        );
+      }
+      res.status(201).json(remSkill);
+    } catch (e) {
+      console.log(e);
+      res.status(500).json('Invalid Error');
+    }
+  }
+  @Put('remove/prevjob')
+  @UseGuards(JwtAuthGuard)
+  async removePrevJob(
+    @Req() req: any,
+    @Res() res: Response,
+    @Query() query: any,
+  ) {
+    const { exid, pjid } = query;
+    try {
+      if (!exid || !pjid) {
+        res.status(404);
+        throw new Error('Insufficient data');
+      }
+      const removePrevJob = await this.PrevJobs.findOneAndDelete(pjid);
+      if (removePrevJob) {
+        await this.Experience.findByIdAndUpdate(
+          exid,
+          {
+            $pull: { PJID: pjid },
+          },
+          {
+            new: true,
+          },
+        );
+      }
+      res.status(201).json(removePrevJob);
+    } catch (e) {
+      console.log(e);
+      res.status(500).json('Invalid Error');
+    }
+  }
+  @Put('remove/training')
+  @UseGuards(JwtAuthGuard)
+  async removeTraining(
+    @Req() req: any,
+    @Res() res: Response,
+    @Query() query: any,
+  ) {
+    const { exid, tid } = query;
+    try {
+      if (!exid || !tid) {
+        res.status(404);
+        throw new Error('Insufficient data');
+      }
+      const removeTraining = await this.Trainings.findOneAndDelete(tid);
+      if (removeTraining) {
+        await this.Experience.findByIdAndUpdate(
+          exid,
+          {
+            $pull: { TRID: tid },
+          },
+          {
+            new: true,
+          },
+        );
+      }
+      res.status(201).json(removeTraining);
+    } catch (e) {
+      console.log(e);
+      res.status(500).json('Invalid Error');
+    }
+  }
+  @Delete('delete')
+  @UseGuards(JwtAuthGuard)
+  async deleteExperience(
+    @Req() req: any,
+    @Res() res: Response,
+    @Query() query: any,
+  ) {
+    const { eid, exid } = query;
+    try {
+      if (!exid) {
+        res.status(404);
+        throw new Error('Insufficient details');
+      }
+      const myEmp = await this.employeeService.giveMyEmployee(eid);
+      if (myEmp && exid) {
+        const myExperience =
+          await this.experienceService.giveMyExperience(exid);
+        if (myExperience) {
+          if (myExperience?.PJID.length > 0) {
+            for (const pjid of myExperience.PJID) {
+              await this.experienceService.delMyPrevJob(pjid);
+            }
+          }
+          if (myExperience?.TRID.length > 0) {
+            for (const tid of myExperience.TRID) {
+              await this.experienceService.delMyTraining(tid);
+            }
+          }
+          if (myExperience?.SKID.length > 0) {
+            for (const skid of myExperience.SKID) {
+              await this.experienceService.delMySkill(skid);
+            }
+          }
+          await this.experienceService.delMyExperience(exid);
+        }
+        myEmp.EXID = null;
+        await myEmp.save();
+      }
+      res.status(201).json({ myEmp });
     } catch (e) {
       console.log(e);
       res.status(500).json('Invalid Error');
