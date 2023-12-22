@@ -197,6 +197,35 @@ export class EmployeeService {
       throw new Error('invalid Error');
     }
   }
+  async roleRulesSubAdminTypical(req: any, moduleNumber: number) {
+    try {
+      const fetchedUser = await this.findUserByReq(req);
+      if (!fetchedUser) {
+        return {
+          status: false,
+          error: 'Invalid Error',
+        };
+      } else if (fetchedUser.role === Roles.indexOf('subAdmin')) {
+        const checkPermissions = fetchedUser.moduleAccess;
+        if (checkPermissions.includes(moduleNumber)) {
+          return { status: true };
+        } else {
+          return {
+            status: false,
+            error: 'sub admin has no permission to perform  operation',
+          };
+        }
+      } else {
+        return { status: true };
+      }
+    } catch (e) {
+      console.log(e);
+      return {
+        status: false,
+        error: 'Invalid Error',
+      };
+    }
+  }
   async roleRulesTypical(req: any, moduleNumber: number) {
     //if user who requested to register new user belongs to lower class then throwing error
     try {
@@ -213,7 +242,7 @@ export class EmployeeService {
       if (fetchedUser.role === Roles.indexOf('employee')) {
         return {
           status: false,
-          error: 'user has no permission to register department',
+          error: 'user has no permission to perform operation',
         };
       }
       //if user belongs to sub admin then check the the permission
@@ -224,7 +253,7 @@ export class EmployeeService {
         } else {
           return {
             status: false,
-            error: 'sub admin has no permission to add department',
+            error: 'sub admin has no permission to perform operation',
           };
         }
       }
@@ -237,7 +266,7 @@ export class EmployeeService {
       console.log(e);
       return {
         status: false,
-        message: 'Invalid Error',
+        error: 'Invalid Error',
       };
     }
   }
@@ -258,6 +287,20 @@ export class EmployeeService {
         { new: true },
       );
       return remCorrectionReq;
+    } catch (e) {
+      console.log(e);
+      throw new Error('Invalid error');
+    }
+  }
+  async giveMyAttendance(eid: any) {
+    try {
+      const myAttendance =
+        await this.Employee.findById(eid).populate('TimeAndAttendance');
+      if (!myAttendance) {
+        return null;
+      } else {
+        return myAttendance;
+      }
     } catch (e) {
       console.log(e);
       throw new Error('Invalid error');

@@ -29,7 +29,19 @@ import { ExperienceService } from 'src/experience/experience.service';
 import { CorrectionReqService } from 'src/correctionReq/correctionReq.service';
 import { DesignationService } from 'src/designation/designation.service';
 import { Roles, modules } from '../utils/utils';
+import {
+  ApiTags,
+  ApiOperation,
+  // ApiOkResponse,
+  // ApiBadRequestResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
 @Controller('employee')
+@ApiTags('Employee')
+@ApiBearerAuth('JWT')
 export class EmployeeController {
   constructor(
     @InjectModel('Employee') private Employee: Model<any>,
@@ -41,6 +53,15 @@ export class EmployeeController {
   ) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Get all employees',
+    description: 'Retrieve all employees from the system.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved all employees.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async all(@Req() req: Request, @Res() res: Response) {
     try {
       const myEmployee = await this.Employee.find({});
@@ -111,6 +132,43 @@ export class EmployeeController {
   }
   @Post('register')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Register a new employee',
+    description: 'Create a new employee with the provided details.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        fatherName: { type: 'string' },
+        cnic: { type: 'string' },
+        profileImg: { type: 'string' },
+        contact: { type: 'string' },
+        emergencyContact: { type: 'string' },
+        email: { type: 'string' },
+        password: { type: 'string' },
+        role: { type: 'number' },
+        moduleAccess: { type: 'array', items: { type: 'number' } },
+      },
+    },
+    description: 'Details of the new employee to be registered.',
+  })
+  @ApiQuery({
+    name: 'did',
+    type: 'string',
+    description: 'Department ID to associate the employee with.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully registered new employee.',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Insufficient data or Associated Department not found.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async register(
     @Req() req: any,
     @Res() res: Response,
@@ -192,6 +250,31 @@ export class EmployeeController {
     }
   }
   @Post('login')
+  @ApiOperation({
+    summary: 'Employee login',
+    description: 'Authenticate an employee with provided email and password.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', description: 'Employee email' },
+        password: { type: 'string', description: 'Employee password' },
+      },
+      
+    },
+    description: 'Credentials for employee authentication.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully logged in.',
+   
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or Insufficient credentials.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async login(
     @Req() req: Request,
     @Res() res: Response,
@@ -217,6 +300,45 @@ export class EmployeeController {
   }
   @Put('update')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Update employee',
+    description: 'Update information for the authenticated employee.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            fatherName: { type: 'string' },
+            cnic: { type: 'string' },
+            profileImg: { type: 'string' },
+            contact: { type: 'string' },
+            emergencyContact: { type: 'string' },
+          },
+        },
+      },
+    },
+    description: 'Data for updating the employee information.',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'Employee ID',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully updated employee information.',
+    
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or Insufficient data.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async updateEmp(
     @Req() req: any,
     @Res() res: Response,
@@ -250,6 +372,32 @@ export class EmployeeController {
   }
   @Delete('delete')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Delete employee',
+    description: 'Delete information for the authenticated employee.',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'Employee ID',
+    type: 'string',
+    required: true,
+  })
+  @ApiQuery({
+    name: 'did',
+    description: 'Department ID',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully deleted employee information.',
+  
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or Insufficient data.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async deleteEmp(
     @Req() req: any,
     @Res() res: Response,
@@ -321,6 +469,36 @@ export class EmployeeController {
   }
   @Put('/module/access/change')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Change module access',
+    description: 'Update module access for the authenticated employee.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        moduleAccess: { type: 'array', items: { type: 'number' } },
+      },
+    },
+    description:
+      'Data for changing module access for the employee. (please add all the modules access while increasing access)',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'Employee ID',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully changed module access.',
+    
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or Insufficient data.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async changeModuleAccess(
     @Req() req: any,
     @Res() res: Response,
@@ -367,6 +545,39 @@ export class EmployeeController {
   }
   @Put('/role/access/change')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Change employee role and access',
+    description: 'Change the role and access for the authenticated employee.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        role: {
+          type: 'number',
+          description: 'New role for the employee.',
+        },
+      },
+      required: ['role'],
+    },
+    description: 'Data for changing the employee role and access.',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'Employee ID',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully changed employee role and access.',
+    
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or Insufficient data.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async changeRoleAccess(
     @Req() req: any,
     @Res() res: Response,
@@ -421,6 +632,26 @@ export class EmployeeController {
   }
   @Put('/status/inactive')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Change employee to inactive status',
+    description: 'Change the inactive status for the authenticated employee.',
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'Employee ID',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully changed employee inactive status.',
+   
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or Insufficient data.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async changeInactiveStatus(
     @Req() req: any,
     @Res() res: Response,

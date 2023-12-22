@@ -15,15 +15,28 @@ import {
   import { JwtAuthGuard } from 'src/auth/jwt-auth.gaurd';
   import { CorrectionReqService } from './correctionReq.service';
   import { EmployeeService } from 'src/employee/employee.service';
+
   import {
     CorrectionReqRequestDto,
     EIdQueryRequestDto,
     CRIDQueryRequestDto,
     ECRIDQueryRequestDto,
   } from './correctionReq.dtos';
+  import {
+    ApiTags,
+    ApiOperation,
+    // ApiOkResponse,
+    // ApiBadRequestResponse,
+    ApiBody,
+    ApiBearerAuth,
+    ApiResponse,
+    ApiQuery,
+  } from '@nestjs/swagger';
   import { Model } from 'mongoose';
   import { modules } from 'src/utils/utils';
   @Controller('employee/correction/req')
+  @ApiTags('Correction Req')
+@ApiBearerAuth('JWT')
   export class CorrectionReqController {
     constructor(
       @InjectModel('CorrectionReq') private CorrectionReq: Model<any>,
@@ -31,6 +44,16 @@ import {
       private readonly employeeService: EmployeeService,
     ) {}
     @Get()
+    @ApiOperation({
+      summary: 'Get all corrections',
+      description: 'Get a list of all correction requests.',
+    })
+    @ApiResponse({
+      status: 200,
+      description: 'Successfully retrieved all corrections.',
+    
+    })
+    @ApiResponse({ status: 500, description: 'Internal Server Error.' })
     async allCorrections(@Req() req: Request, @Res() res: Response) {
       try {
         const all = await this.CorrectionReq.find({});
@@ -42,6 +65,17 @@ import {
     }
     @Put('/me')
     @UseGuards(JwtAuthGuard)
+    @ApiOperation({
+      summary: 'Get my correction requests',
+      description:
+        'Get correction requests associated with the authenticated employee.',
+    })
+    @ApiResponse({
+      status: 200,
+      description: 'Successfully retrieved correction requests.',
+      
+    })
+    @ApiResponse({ status: 500, description: 'Internal Server Error.' })
     async myCorrectionReq(@Req() req: any, @Res() res: Response) {
       try {
         const myExmployee = await this.employeeService.findUserByReq(req);
@@ -61,6 +95,41 @@ import {
     }
     @Put('/add')
     @UseGuards(JwtAuthGuard)
+    @ApiOperation({
+      summary: 'Add correction request',
+      description: 'Add a correction request for the specified employee.',
+    })
+    @ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: {
+              subject: { type: 'string' },
+              description: { type: 'string' },
+              status: { type: 'string' },
+            },
+          },
+        },
+      },
+    })
+    @ApiQuery({
+      name: 'eid',
+      type: 'string',
+      description: 'Employee ID to associate the correction request with.',
+    })
+    @ApiResponse({
+      status: 201,
+      description: 'Successfully added correction request.',
+     
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized or Insufficient data.',
+    })
+    @ApiResponse({ status: 404, description: 'Employee not found.' })
+    @ApiResponse({ status: 500, description: 'Internal Server Error.' })
     async addCorrection(
       @Req() req: Request,
       @Res() res: Response,
@@ -99,6 +168,41 @@ import {
       }
       @Put('/update')
       @UseGuards(JwtAuthGuard)
+      @ApiOperation({
+        summary: 'Update correction request',
+        description: 'Update the details of a correction request.',
+      })
+      @ApiBody({
+        schema: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'object',
+              properties: {
+                subject: { type: 'string' },
+                description: { type: 'string' },
+                status: { type: 'number', enum: [0, 1, 2] },
+              },
+            },
+          },
+        },
+      })
+      @ApiQuery({
+        name: 'crid',
+        description: 'Correction Request ID',
+        type: 'string',
+        required: true,
+      })
+      @ApiResponse({
+        status: 201,
+        description: 'Successfully updated correction request.',
+        
+      })
+      @ApiResponse({
+        status: 401,
+        description: 'Unauthorized or Insufficient data.',
+      })
+      @ApiResponse({ status: 500, description: 'Internal Server Error.' })
       async updateCorrection(
         @Req() req: Request,
         @Res() res: Response,
@@ -136,7 +240,37 @@ import {
     }
     @Delete('/delete')
     @UseGuards(JwtAuthGuard)
-  async deleteCorrection(
+    @ApiOperation({
+      summary: 'Delete correction request',
+      description: 'Delete a correction request associated with an employee.',
+    })
+    @ApiQuery({
+      name: 'eid',
+      description: 'Employee ID',
+      type: 'string',
+      required: true,
+    })
+    @ApiQuery({
+      name: 'crid',
+      description: 'Correction Request ID',
+      type: 'string',
+      required: true,
+    })
+    @ApiResponse({
+      status: 201,
+      description: 'Successfully deleted correction request.',
+     
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized or Insufficient data.',
+    })
+    @ApiResponse({
+      status: 404,
+      description: 'Employee not found or Operation unsuccessful.',
+    })
+    @ApiResponse({ status: 500, description: 'Internal Server Error.' })
+    async deleteCorrection(
     @Req() req: Request,
     @Res() res: Response,
     @Query() query: ECRIDQueryRequestDto,
